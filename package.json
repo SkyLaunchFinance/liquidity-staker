@@ -1,10 +1,10 @@
 {
-  "name": "@uniswap/liquidity-staker",
-  "version": "1.0.2",
-  "author": "Noah Zinsmeister",
+  "name": "@skylaunch/liquidity-staker",
+  "version": "1.0.3",
+  "author": "Chris Ciszak",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Uniswap/liquidity-staker"
+    "url": "https://github.com/SkyLaunchFinance/liquidity-staker"
   },
   "files": [
     "build"
@@ -16,7 +16,7 @@
     "precompile": "rimraf ./build/",
     "compile": "waffle",
     "pretest": "yarn compile",
-    "test": "mocha --grep 'stakingWithLPtokens'",
+    "test": "mocha",
     "lint": "prettier ./test/**/*.ts --check",
     "prepublishOnly": "yarn test",
     "build-contracts": "sol-merger \"./contracts/*.sol\" ./build"
