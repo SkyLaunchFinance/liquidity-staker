@@ -53,8 +53,14 @@ export async function getApprovalDigest(
 
 export const REWARDS_DURATION = 60 * 60 * 24 * 60
 
+export const SIX_MONTHS = 60 * 60 * 24 * 180
+
 export function expandTo18Decimals(n: number): BigNumber {
   return BigNumber.from(n).mul(BigNumber.from(10).pow(18))
+}
+
+export function expandTo17Decimals(n: number): BigNumber {
+  return BigNumber.from(n).mul(BigNumber.from(10).pow(17))
 }
 
 export async function mineBlock(provider: providers.Web3Provider, timestamp: number): Promise<void> {

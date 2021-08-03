@@ -3,7 +3,7 @@ import { Contract, BigNumber } from 'ethers'
 import { solidity, MockProvider, createFixtureLoader } from 'ethereum-waffle'
 
 import { stakingRewardsFactoryFixture } from './fixtures'
-import { mineBlock } from './utils'
+import { expandTo17Decimals, mineBlock } from './utils'
 
 import StakingRewards from '../build/StakingRewards.json'
 
@@ -20,11 +20,18 @@ describe('StakingRewardsFactory', () => {
   const [wallet, wallet1] = provider.getWallets()
   const loadFixture = createFixtureLoader([wallet], provider)
 
+  const nonWithdrawalBoost = expandTo17Decimals(5);
+  const nonWithdrawalBoostPeriod = 356;
+  const minimumLockDays = 30;
+
   let rewardsToken: Contract
   let genesis: number
   let rewardAmounts: BigNumber[]
   let stakingRewardsFactory: Contract
   let stakingTokens: Contract[]
+  let nonWithdrawalBoosts: BigNumber[]
+  let nonWithdrawalBoostPeriods: number[]
+  let minimumLockDaysArray: number[]
 
   beforeEach('load fixture', async () => {
     const fixture = await loadFixture(stakingRewardsFactoryFixture)
@@ -33,34 +40,37 @@ describe('StakingRewardsFactory', () => {
     rewardAmounts = fixture.rewardAmounts
     stakingRewardsFactory = fixture.stakingRewardsFactory
     stakingTokens = fixture.stakingTokens
+    nonWithdrawalBoosts = fixture.nonWithdrawalBoosts
+    nonWithdrawalBoostPeriods = fixture.nonWithdrawalBoostPeriods
+    minimumLockDaysArray = fixture.minimumLockDaysArray
   })
 
   it('deployment gas', async () => {
     const receipt = await provider.getTransactionReceipt(stakingRewardsFactory.deployTransaction.hash)
-    expect(receipt.gasUsed).to.eq('2080815')
+    expect(receipt.gasUsed).to.eq('3395142')
   })
 
   describe('#deploy', () => {
     it('pushes the token into the list', async () => {
-      await stakingRewardsFactory.deploy(stakingTokens[1].address, 10000)
+      await stakingRewardsFactory.deploy(stakingTokens[1].address, 10000, nonWithdrawalBoost, nonWithdrawalBoostPeriod, minimumLockDays, false)
       expect(await stakingRewardsFactory.stakingTokens(0)).to.eq(stakingTokens[1].address)
     })
 
     it('fails if called twice for same token', async () => {
-      await stakingRewardsFactory.deploy(stakingTokens[1].address, 10000)
-      await expect(stakingRewardsFactory.deploy(stakingTokens[1].address, 10000)).to.revertedWith(
+      await stakingRewardsFactory.deploy(stakingTokens[1].address, 10000, nonWithdrawalBoost, nonWithdrawalBoostPeriod, minimumLockDays, false)
+      await expect(stakingRewardsFactory.deploy(stakingTokens[1].address, 10000, nonWithdrawalBoost, nonWithdrawalBoostPeriod, minimumLockDays, false)).to.revertedWith(
         'StakingRewardsFactory::deploy: already deployed'
       )
     })
 
     it('can only be called by the owner', async () => {
-      await expect(stakingRewardsFactory.connect(wallet1).deploy(stakingTokens[1].address, 10000)).to.be.revertedWith(
+      await expect(stakingRewardsFactory.connect(wallet1).deploy(stakingTokens[1].address, 10000, nonWithdrawalBoost, nonWithdrawalBoostPeriod, minimumLockDays, false)).to.be.revertedWith(
         'Ownable: caller is not the owner'
       )
     })
 
     it('stores the address of stakingRewards and reward amount', async () => {
-      await stakingRewardsFactory.deploy(stakingTokens[1].address, 10000)
+      await stakingRewardsFactory.deploy(stakingTokens[1].address, 10000, nonWithdrawalBoost, nonWithdrawalBoostPeriod, minimumLockDays, false)
       const [stakingRewards, rewardAmount] = await stakingRewardsFactory.stakingRewardsInfoByStakingToken(
         stakingTokens[1].address
       )
@@ -69,7 +79,7 @@ describe('StakingRewardsFactory', () => {
     })
 
     it('deployed staking rewards has correct parameters', async () => {
-      await stakingRewardsFactory.deploy(stakingTokens[1].address, 10000)
+      await stakingRewardsFactory.deploy(stakingTokens[1].address, 10000, nonWithdrawalBoost, nonWithdrawalBoostPeriod, minimumLockDays, false)
       const [stakingRewardsAddress] = await stakingRewardsFactory.stakingRewardsInfoByStakingToken(
         stakingTokens[1].address
       )
@@ -77,6 +87,9 @@ describe('StakingRewardsFactory', () => {
       expect(await stakingRewards.rewardsDistribution()).to.eq(stakingRewardsFactory.address)
       expect(await stakingRewards.stakingToken()).to.eq(stakingTokens[1].address)
       expect(await stakingRewards.rewardsToken()).to.eq(rewardsToken.address)
+      expect(await stakingRewards.nonWithdrawalBoost()).to.eq(nonWithdrawalBoost)
+      expect(await stakingRewards.nonWithdrawalBoostPeriod()).to.eq(nonWithdrawalBoostPeriod)
+      expect(await stakingRewards.minimumLockDays()).to.eq(minimumLockDays)
     })
   })
 
@@ -98,7 +111,7 @@ describe('StakingRewardsFactory', () => {
       beforeEach('deploy staking reward contracts', async () => {
         stakingRewards = []
         for (let i = 0; i < stakingTokens.length; i++) {
-          await stakingRewardsFactory.deploy(stakingTokens[i].address, rewardAmounts[i])
+          await stakingRewardsFactory.deploy(stakingTokens[i].address, rewardAmounts[i], nonWithdrawalBoosts[i], nonWithdrawalBoostPeriods[i], minimumLockDaysArray[i], false)
           const [stakingRewardsAddress] = await stakingRewardsFactory.stakingRewardsInfoByStakingToken(
             stakingTokens[i].address
           )
@@ -111,7 +124,7 @@ describe('StakingRewardsFactory', () => {
         await mineBlock(provider, genesis)
         const tx = await stakingRewardsFactory.notifyRewardAmounts()
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq('416215')
+        expect(receipt.gasUsed).to.eq('416260')
       })
 
       it('no op if called twice', async () => {
