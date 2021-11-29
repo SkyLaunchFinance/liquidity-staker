@@ -172,7 +172,9 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
             stakeDeposit.endDate = block.timestamp.add(minimumLockDays * 1 days);
         }
         else{
-            stakeDeposit.endDate = stakeDeposit.endDate.add(minimumLockDays * 1 days);
+            if(block.timestamp.add(minimumLockDays * 1 days) > stakeDeposit.endDate){
+                stakeDeposit.endDate = block.timestamp.add(minimumLockDays * 1 days);
+            }
         }
 
         stakeDeposit.exists = true;
@@ -201,7 +203,9 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
             stakeDeposit.endDate = block.timestamp.add(daysDuration * 1 days);
         }
         else{
-            stakeDeposit.endDate = stakeDeposit.endDate.add(daysDuration * 1 days);
+            if(block.timestamp.add(daysDuration * 1 days) > stakeDeposit.endDate){
+                stakeDeposit.endDate = block.timestamp.add(daysDuration * 1 days);
+            }
         }
 
         stakeDeposit.exists = true;
@@ -220,7 +224,9 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
             stakeDeposit.endDate = block.timestamp.add(daysDuration * 1 days);
         }
         else{
-            stakeDeposit.endDate = stakeDeposit.endDate.add(daysDuration * 1 days);
+            if(block.timestamp.add(daysDuration * 1 days) > stakeDeposit.endDate){
+                stakeDeposit.endDate = block.timestamp.add(daysDuration * 1 days);
+            }
         }
 
         _stake(amount);
@@ -235,7 +241,9 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
             stakeDeposit.endDate = block.timestamp.add(minimumLockDays * 1 days);
         }
         else{
-            stakeDeposit.endDate = stakeDeposit.endDate.add(minimumLockDays * 1 days);
+            if(block.timestamp.add(minimumLockDays * 1 days) > stakeDeposit.endDate){
+                stakeDeposit.endDate = block.timestamp.add(minimumLockDays * 1 days);
+            }
         }
 
         _stake(amount);
